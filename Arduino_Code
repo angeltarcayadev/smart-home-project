@@ -1,1 +1,67 @@
+/*
+ * Proyecto: Casa Inteligente (Smart Home) V1.0
+ * Autor: Angel Tarcaya
+ * Stack: Arduino + Bluetooth HC-05 + MIT App Inventor
+ * * Funcionalidades:
+ * - Iluminación 220V (Vía Relé)
+ * - Climatización (Ventilador DC)
+ * - Control de Acceso (Puerta Principal - Servo)
+ * - Portón Garage (Servo Mecánico)
+ */
 
+#include <Servo.h>
+
+// --- Definición de Pines ---
+const int PIN_RELAY_FOCO = 13;  // Control luz 220V
+const int PIN_VENTILADOR = 12;  // Motor DC (vía Transistor/Driver)
+const int PIN_SERVO_PUERTA = 9; // Servo Puerta
+const int PIN_SERVO_GARAGE = 10;// Servo Garage
+
+// --- Objetos Servo ---
+Servo puertaServo;
+Servo garageServo;
+
+// --- Variables ---
+char comando; // Para guardar el dato que llega por Bluetooth
+
+void setup() {
+  Serial.begin(9600); // Iniciar Bluetooth
+  
+  // Configurar Salidas
+  pinMode(PIN_RELAY_FOCO, OUTPUT);
+  pinMode(PIN_VENTILADOR, OUTPUT);
+  
+  // Configurar Servos
+  puertaServo.attach(PIN_SERVO_PUERTA);
+  garageServo.attach(PIN_SERVO_GARAGE);
+
+  // Estado inicial: Todo apagado/cerrado
+  digitalWrite(PIN_RELAY_FOCO, LOW); 
+  digitalWrite(PIN_VENTILADOR, LOW);
+  puertaServo.write(0);  // Puerta cerrada (0 grados)
+  garageServo.write(0);  // Garage cerrado (0 grados)
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    comando = Serial.read();
+
+    switch (comando) {
+      // --- ILUMINACIÓN (RELÉ 220V) ---
+      case 'A': digitalWrite(PIN_RELAY_FOCO, HIGH); break; // Encender Luz
+      case 'B': digitalWrite(PIN_RELAY_FOCO, LOW);  break; // Apagar Luz
+
+      // --- CLIMATIZACIÓN (MOTOR DC) ---
+      case 'C': digitalWrite(PIN_VENTILADOR, HIGH); break; // Encender Ventilador
+      case 'D': digitalWrite(PIN_VENTILADOR, LOW);  break; // Apagar Ventilador
+
+      // --- PUERTA PRINCIPAL (SERVO 1) ---
+      case 'E': puertaServo.write(90); break; // Abrir Puerta
+      case 'F': puertaServo.write(0);  break; // Cerrar Puerta
+
+      // --- GARAGE (SERVO 2) ---
+      case 'G': garageServo.write(90); break; // Abrir Garage
+      case 'H': garageServo.write(0);  break; // Cerrar Garage
+    }
+  }
+}
